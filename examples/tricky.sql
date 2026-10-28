@@ -1,0 +1,1 @@
+select 'select * from where', "order", t."group", [from], `limit`, t.select, count, count(*), a::text, data->>'name', -1 * x, arr[2], .5, 1e-3, $$it's a $tag$ string$$, E'line\n', N'naïve' from t where id = $1 and slug = :slug and a is distinct from b and created_at at time zone 'UTC' > now()

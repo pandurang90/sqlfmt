@@ -1,0 +1,52 @@
+#!/usr/bin/env ruby
+# Formats SQL from files or standard input.
+#
+#   sqlfmt query.sql            # print formatted query
+#   cat query.sql | sqlfmt      # read stdin
+#   sqlfmt -w a.sql b.sql       # rewrite files in place
+
+require "optparse"
+require_relative "../lib/sqlfmt"
+
+options = { indent: 2, tabs: false, case: :upper, write: false }
+parser = OptionParser.new do |o|
+  o.banner = "usage: sqlfmt [options] [file ...]\n\nReads standard input when no files are given.\n\n"
+  o.on("--indent N", Integer, "spaces per indentation level (default 2)") { |v| options[:indent] = v }
+  o.on("--tabs", "indent with tabs instead of spaces") { options[:tabs] = true }
+  o.on("--case CASE", %i[upper lower preserve], "keyword case: upper, lower, or preserve (default upper)") do |v|
+    options[:case] = v
+  end
+  o.on("-w", "--write", "write result back to each file instead of stdout") { options[:write] = true }
+end
+
+def fail_with(msg)
+  warn "sqlfmt: #{msg}"
+  exit 1
+end
+
+begin
+  parser.parse!
+rescue OptionParser::ParseError => e
+  fail_with(e.message)
+end
+
+indent = options[:tabs] ? "\t" : " " * options[:indent]
+format = ->(src) { SQLFmt.format(src, indent: indent, keyword_case: options[:case]) }
+
+if ARGV.empty?
+  fail_with("-w requires file arguments") if options[:write]
+  print format.call($stdin.read)
+  exit
+end
+
+ARGV.each do |path|
+  src = File.read(path)
+  out = format.call(src)
+  if options[:write]
+    File.write(path, out)
+  else
+    print out
+  end
+rescue SystemCallError => e
+  fail_with(e.message)
+end

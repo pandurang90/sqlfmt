@@ -1,0 +1,1 @@
+select department, employee, salary, rank() over (partition by department order by salary desc) as dept_rank, sum(salary) over (partition by department) dept_total, lag(salary, 1) over (order by hired_at rows between unbounded preceding and current row) prev_salary from employees where salary between 50000 and 200000 qualify dept_rank <= 3
